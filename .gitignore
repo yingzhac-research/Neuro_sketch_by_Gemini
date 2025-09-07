@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+
+# Environment and credentials
+.env
+.env.*
+app/llm/credentials.py
+
+# Build / packaging
+build/
+dist/
+*.egg-info/
+
+# Caches and coverage
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+.pyre/
+.coverage
+.coverage.*
+coverage.xml
+
+# IDE / editor
+.vscode/
+.idea/
+*.code-workspace
+.DS_Store
+
+# Project outputs
+artifacts/
+
+# Logs
+*.log

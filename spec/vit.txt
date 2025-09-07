@@ -1,0 +1,7 @@
+Generate a high-level diagram of a Vision Transformer (ViT):
+- Input: 224×224 RGB image
+- Patch Embedding: split into 16×16 patches and apply a linear projection
+- Add CLS token and positional encoding
+- Transformer Encoder stack: Multi-Head Self-Attention + MLP + residual + LayerNorm (repeat L layers)
+- Classification head: take CLS token for linear classification
+Layout requirements: left-to-right flow; clear arrow directions; correct spelling of all labels; show the number of layers L; keep colors readable.
