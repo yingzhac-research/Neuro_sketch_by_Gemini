@@ -1,40 +1,89 @@
-# Python
+﻿# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
-*$py.class
+*.class
 
-# Virtual environments
-.venv/
-venv/
+# C extensions
+*.so
 
-# Environment and credentials
-.env
-.env.*
-app/llm/credentials.py
-
-# Build / packaging
+# Distribution / packaging
+.Python
 build/
+develop-eggs/
 dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
 *.egg-info/
+.installed.cfg
+*.egg
 
-# Caches and coverage
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.cache/
-.pyre/
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
 .coverage
 .coverage.*
+.cache
+nosetests.xml
 coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
 
-# IDE / editor
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow
+__pypackages__/
+
+# Environments
+.env
+.venv
+venv/
+ENV/
+env/
+
+# VS Code
 .vscode/
+
+# PyCharm
 .idea/
-*.code-workspace
-.DS_Store
 
-# Project outputs
+# Artifacts and outputs
 artifacts/
+artifacts/**
+*.png
+*.jpg
+*.jpeg
 
-# Logs
-*.log
+# Secrets
+app/llm/credentials.py
+app/llm/credentials.json
+
+# Mac/Windows
+.DS_Store
+Thumbs.db
