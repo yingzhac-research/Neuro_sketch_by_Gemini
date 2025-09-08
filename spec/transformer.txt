@@ -1,0 +1,31 @@
+Title: Transformer Encoder-Decoder (Machine Translation)
+
+Instructions:
+- Produce a clean paper-style architecture diagram: flat 2D, white background, minimal color (black/gray + <=2 accent colors), no gradients/3D/shadows.
+- Layout left->right. Clear arrows indicate data flow.
+- Draw boxes for major modules and show grouping for repeated layers.
+- Text labels should be concise and capitalized (e.g., EMBEDDING, ENCODER xN, DECODER xN).
+
+Architecture:
+- Input: tokenized source sentence
+- Source Embedding + Positional Encoding
+- Encoder (N layers):
+  - Multi-Head Self-Attention
+  - Add & LayerNorm
+  - Feed-Forward (MLP)
+  - Add & LayerNorm
+- Target: previous target tokens (for training)
+- Target Embedding + Positional Encoding
+- Decoder (N layers):
+  - Masked Multi-Head Self-Attention
+  - Add & LayerNorm
+  - Cross-Attention (attends to Encoder outputs)
+  - Add & LayerNorm
+  - Feed-Forward (MLP)
+  - Add & LayerNorm
+- Output: Linear + Softmax
+
+Style details:
+- Use a dashed rounded rectangle to group the N repeated layers on both encoder and decoder.
+- Keep arrows straight. Left->right overall; show a connection from Encoder outputs to the Cross-Attention in Decoder.
+- If space is tight, abbreviate labels (e.g., SELF-ATTN, CROSS-ATTN, FFN).

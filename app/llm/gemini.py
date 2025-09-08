@@ -42,7 +42,7 @@ def _get_api_key() -> Optional[str]:
 def call_gemini(kind: str, **kwargs) -> Dict[str, Any]:
     """Unified entry for Gemini calls.
 
-    kind: one of {"parse", "plan", "prompt_generate", "image_generate", "judge", "image_edit"}
+    kind: one of {"parse", "plan", "prompt_generate", "image_generate", "judge", "image_edit", "image_fuse"}
     kwargs: payload for the corresponding action
 
     If API key is missing or a call fails, falls back to deterministic local placeholders
@@ -50,16 +50,11 @@ def call_gemini(kind: str, **kwargs) -> Dict[str, Any]:
     """
     api_key = _get_api_key()
     if not api_key:
+        # Simplified behavior: if no API key, always use local placeholders
         return _local_placeholder(kind, **kwargs)
 
-    try:
-        return _real_gemini(kind, api_key=api_key, **kwargs)
-    except Exception:
-        # For image generation/editing, do not fallback if remote is expected
-        if kind in {"image_generate", "image_edit"}:
-            raise
-        # Otherwise, degrade gracefully
-        return _local_placeholder(kind, **kwargs)
+    # With an API key present, call the real service and surface errors directly
+    return _real_gemini(kind, api_key=api_key, **kwargs)
 
 
 def _local_placeholder(kind: str, **kwargs) -> Dict[str, Any]:
@@ -530,7 +525,7 @@ def _real_gemini(kind: str, *, api_key: str, **kwargs) -> Dict[str, Any]:
     genai.configure(api_key=api_key)
 
     # Model names are configurable via env with safe defaults.
-    # You can set GEMINI_MODEL to your provisioned model, e.g. "gemini-2.0-flash-exp" 或 "gemini-1.5-flash"。
+    # You can set GEMINI_MODEL to your provisioned model, e.g. "gemini-2.0-flash-exp" or "gemini-1.5-flash".
     text_model_name = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
     image_model_name = os.getenv("GEMINI_IMAGE_MODEL", "")  # e.g. "imagen-3.0-generate"
     image_edit_model_name = os.getenv("GEMINI_IMAGE_EDIT_MODEL", "")  # e.g. "imagen-3.0-edit"
@@ -574,7 +569,7 @@ def _real_gemini(kind: str, *, api_key: str, **kwargs) -> Dict[str, Any]:
         prompts: List[str] = kwargs.get("prompts", [])
         outdir: str = kwargs.get("outdir", "artifacts")
         if not image_model_name:
-            return _local_placeholder(kind, **kwargs)
+            raise ValueError("GEMINI_IMAGE_MODEL is not set. Please set it to a valid image model (e.g., 'gemini-2.5-flash-image' or 'gemini-2.5-flash-image-preview').")
         try:
             from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -645,16 +640,19 @@ def _real_gemini(kind: str, *, api_key: str, **kwargs) -> Dict[str, Any]:
         image_path: str = kwargs.get("image_path")
         out_path: str = kwargs.get("out_path")
         instructions: str = kwargs.get("instructions", "")
+        ref_images: List[str] = list(kwargs.get("ref_images", []) or [])
         if not image_edit_model_name:
-            return _local_placeholder(kind, **kwargs)
+            raise ValueError("GEMINI_IMAGE_EDIT_MODEL is not set. Please set it to a valid image edit model (e.g., 'gemini-2.5-flash-image' or 'gemini-2.5-flash-image-preview').")
         try:
             model = genai.GenerativeModel(model_name=image_edit_model_name)
             base_img = _image_part_from_path(image_path)
             from .. import prompts as _p
-            parts = [
-                {"text": _p.build_image_edit_prompt(instructions)},
-                base_img,
-            ]
+            parts = [{"text": _p.build_image_edit_prompt(instructions)}, base_img]
+            for rp in ref_images:
+                try:
+                    parts.append(_image_part_from_path(rp))
+                except Exception:
+                    continue
             resp = model.generate_content(parts, request_options={"timeout": 120})
             try:
                 out_p = Path(out_path)
@@ -675,6 +673,42 @@ def _real_gemini(kind: str, *, api_key: str, **kwargs) -> Dict[str, Any]:
             return {"path": str(out_p)}
         except Exception as e:
             # surface error rather than fallback, per user's requirement to avoid local rendering
+            raise
+
+    if kind == "image_fuse":
+        # Create a new image by composing multiple reference images under textual instructions
+        out_path: str = kwargs.get("out_path")
+        instructions: str = kwargs.get("instructions", "")
+        ref_images: List[str] = list(kwargs.get("ref_images", []) or [])
+        if not image_model_name:
+            raise ValueError("GEMINI_IMAGE_MODEL is not set. Please set it to a valid image model (e.g., 'gemini-2.5-flash-image' or 'gemini-2.5-flash-image-preview').")
+        try:
+            model = genai.GenerativeModel(model_name=image_model_name)
+            from .. import prompts as _p
+            parts = [{"text": _p.build_image_fusion_prompt(instructions)}]
+            for rp in ref_images:
+                try:
+                    parts.append(_image_part_from_path(rp))
+                except Exception:
+                    continue
+            resp = model.generate_content(parts, request_options={"timeout": 120})
+            try:
+                out_p = Path(out_path)
+                out_p.parent.mkdir(parents=True, exist_ok=True)
+                (out_p.parent / (out_p.stem + ".resp.txt")).write_text(str(resp))
+            except Exception:
+                pass
+            img_bytes, mime = _first_image_bytes(resp)
+            if not img_bytes:
+                raise ValueError("image fuse returned no image; see *.resp.txt for raw response")
+            out_p = Path(out_path)
+            out_p.parent.mkdir(parents=True, exist_ok=True)
+            with open(out_p, "wb") as f:
+                f.write(img_bytes)
+            with open(str(out_p) + ".meta.json", "w", encoding="utf-8") as mf:
+                mf.write(json.dumps({"source": "gemini", "mime": mime, "bytes": len(img_bytes)}, ensure_ascii=False))
+            return {"path": str(out_p)}
+        except Exception:
             raise
 
     raise ValueError(f"Unsupported kind={kind}")

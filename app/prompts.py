@@ -53,3 +53,13 @@ def build_image_edit_prompt(instructions: str) -> str:
         "Use each label string exactly as provided (no translation or paraphrase). "
     )
     return base + f"Instructions: {instructions}"
+
+
+def build_image_fusion_prompt(instructions: str) -> str:
+    # Compose multiple images guided by text while preserving key visual constraints
+    return (
+        "Compose a new, clean technical diagram by integrating the following reference images. "
+        "Preserve the overall paper-style look: flat 2D, white background, minimal color, consistent line width, and sans-serif text. "
+        "Follow the instructions precisely; keep geometry aligned and readable; avoid extra decorations. "
+        f"Instructions: {instructions}"
+    )

@@ -12,17 +12,23 @@ def run(state: AppState) -> AppState:
 
     # dump spec
     if state.get("spec"):
-        (outdir / "spec.json").write_text(json.dumps(state["spec"], ensure_ascii=False, indent=2))
+        (outdir / "spec.json").write_text(
+            json.dumps(state["spec"], ensure_ascii=False, indent=2), encoding="utf-8"
+        )
     if state.get("spec_text"):
-        (outdir / "spec.txt").write_text(state["spec_text"]) 
+        (outdir / "spec.txt").write_text(state["spec_text"], encoding="utf-8")
 
     # dump prompts
     if state.get("prompts"):
-        (outdir / "prompts.json").write_text(json.dumps(state["prompts"], ensure_ascii=False, indent=2))
+        (outdir / "prompts.json").write_text(
+            json.dumps(state["prompts"], ensure_ascii=False, indent=2), encoding="utf-8"
+        )
 
     # dump scores
     if state.get("scores"):
-        (outdir / "scores.json").write_text(json.dumps(state["scores"], ensure_ascii=False, indent=2))
+        (outdir / "scores.json").write_text(
+            json.dumps(state["scores"], ensure_ascii=False, indent=2), encoding="utf-8"
+        )
 
     # copy/rename final image
     if state.get("best_image"):
@@ -32,4 +38,3 @@ def run(state: AppState) -> AppState:
             dst.write_bytes(src.read_bytes())
 
     return state
-

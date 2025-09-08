@@ -6,6 +6,7 @@ from typing import Callable
 
 from .state import AppState
 from .nodes import parser, planner, prompt_gen, gen_generate, gen_labels, judge, select, edit, archive
+from .nodes import gen_fusion
 
 
 def run_pipeline(state: AppState) -> AppState:
@@ -34,6 +35,25 @@ def run_pipeline(state: AppState) -> AppState:
         state = select.run(state)
 
     # 9) archive
+    state = archive.run(state)
+    return state
+
+
+def run_fusion_pipeline(state: AppState) -> AppState:
+    # ensure outdir
+    outdir = Path(state.get("outdir") or _default_outdir())
+    outdir.mkdir(parents=True, exist_ok=True)
+    state["outdir"] = str(outdir)
+    state["round"] = int(state.get("round", 0))
+
+    # Generate fused candidates from images + text instructions
+    state = gen_fusion.run(state)
+
+    # If we have candidates, select first as best; optionally judge later
+    if state.get("images"):
+        state["best_image"] = state["images"][0]
+
+    # Archive results (final.png etc.)
     state = archive.run(state)
     return state
 
